@@ -1,0 +1,19 @@
+# Skills to sync from ~/.claude/skills/ into this repo.
+# One skill directory name per line. Blank lines and # comments ignored.
+
+ray-branch-plan
+ray-branch-review
+ray-branch-squash
+ray-commit
+ray-ddd
+ray-gem-release
+ray-init
+ray-knowledgebase
+ray-md-lint
+ray-papers-library
+ray-poster-create
+ray-pr-create
+ray-settings-trim
+ray-tdd
+ray-test-demos
+ray-transcript-speechify

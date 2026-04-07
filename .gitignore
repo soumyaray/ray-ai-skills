@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# AI tooling
+CLAUDE.local.md
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+!.claude/skills/
