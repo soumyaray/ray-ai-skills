@@ -70,18 +70,30 @@ That's it — symlinked skills pick up changes immediately.
 
 ## Contributing / authoring
 
-I author these skills in `~/.claude/skills/` directly so Claude Code picks them up live, then mirror them into this repo with `sync.sh`:
+I author these skills in `~/.claude/skills/` directly so Claude Code picks them up live, then mirror them into this repo. `.shared-skills` controls which skill directories get mirrored; `sync.sh` uses `rsync -a --delete`, so files removed from the source skill are removed from the repo copy too.
+
+The repo also ships two **project-local maintainer skills** under `.claude/skills/` that Claude Code loads automatically when you run it from inside this repo:
+
+- **`skills-audit`** — scans skill source files for hardcoded personal paths, credentials, and other publication blockers before syncing. Read-only.
+- **`skills-update`** — audits, then runs `sync.sh`, then stops before commit. Also handles `add` / `remove` against `.shared-skills` via natural-language requests like "add ray-foo" or "remove ray-bar".
+
+Typical flow:
 
 ```sh
 cd ~/code/ray-ai-skills
+claude   # then: "skills-update" — audits and syncs everything changed
+git diff # review, then commit manually
+```
+
+Or do it by hand:
+
+```sh
 ./sync.sh
 git status
 git diff
 ```
 
-`.shared-skills` controls which skill directories get mirrored. `sync.sh` uses `rsync -a --delete`, so files removed from the source skill are removed from the repo copy too.
-
-If you want to suggest changes, open a PR against the mirrored copy in this repo and I'll fold the changes back into my source.
+If you want to suggest changes, please open an issue rather than a PR. Since the canonical source lives in `~/.claude/skills/` and the repo copy is overwritten by `sync.sh`, I need to fold changes back into the source by hand — an issue describing the problem or proposed change is the most useful starting point.
 
 ## License
 
