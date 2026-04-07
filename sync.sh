@@ -43,6 +43,8 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   rsync -a --delete \
     --exclude='.DS_Store' \
     --exclude='__pycache__' \
+    --exclude='.Rhistory' \
+    --exclude='.RData' \
     "${src_dir}/" "${dst_dir}/"
 done < "$LIST"
 
