@@ -71,11 +71,11 @@ CLAUDE.local.md
 
 **.swsymlink** — files/dirs that should be symlinked across machines:
 ```
-.claude/archive/
+.claude/plans/
 .claude/settings.local.json
 ```
 
-The entries above are sensible defaults — `.claude/archive/` and `.claude/settings.local.json` are commonly shared across machines, while `CLAUDE.local.md` is per-machine. Adjust the lists to fit the project. These manifest files tell the sync tool which local files to manage; `.swcopy` lists files to copy (each machine gets its own version), `.swsymlink` lists files to symlink (shared across machines via a sync service such as Dropbox).
+The entries above are sensible defaults — `.claude/plans/` (Claude Code plans) and `.claude/settings.local.json` are commonly shared across machines, while `CLAUDE.local.md` is per-machine. Adjust the lists to fit the project. These manifest files tell the sync tool which local files to manage; `.swcopy` lists files to copy (each machine gets its own version), `.swsymlink` lists files to symlink (shared across machines via a sync service such as Dropbox).
 
 ### 6. Offer to commit
 

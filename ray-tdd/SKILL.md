@@ -27,8 +27,8 @@ Write a single test that describes the next small increment of behavior. The tes
 
 After writing the test:
 
-1. **Run the test suite**. Use the project's actual test runner (not mental execution).
-2. **Confirm the new test fails**. Report the failure message.
+1. **Run only the new test** (or the single file that contains it) — not the whole suite. Use the project's actual test runner (not mental execution), in its quiet / failure-only mode (e.g. `-q`, `--quiet`, `--reporter=dot`) so output stays small.
+2. **Confirm the new test fails**. Report just the assertion/failure line, not the full runner output.
 3. **If the test passes** — STOP. Something is wrong. Either the behavior already exists (the test is redundant) or the test doesn't actually assert what you think it does. Investigate before proceeding.
 
 ### Phase 2: GREEN — Write the minimum code to pass
@@ -42,9 +42,10 @@ Write the **simplest, most minimal code** that makes the failing test pass:
 
 After writing the implementation:
 
-1. **Run the full test suite** (not just the new test).
-2. **Confirm the new test passes AND no existing tests broke**.
-3. If other tests broke, fix the implementation — don't change the tests (unless they were wrong).
+1. **Run the affected test file** (in quiet mode). Confirm the new test now passes.
+2. **Run the full suite at natural boundaries** — not every cycle. Run it whenever you finish a coherent unit of behavior, before a refactor, and **always at the end of the task**. This catches regressions in other tests without dumping full-suite output into context on every green step.
+3. **Confirm the new test passes AND no existing tests broke** at each full-suite run.
+4. If other tests broke, fix the implementation — don't change the tests (unless they were wrong).
 
 ### Phase 3: REFACTOR — Improve structure, keep behavior
 
@@ -78,11 +79,15 @@ Start with the simplest, most degenerate case and build up:
 
 This ordering lets each GREEN phase be a small, manageable step.
 
-### One test at a time
+### One test at a time — with judgment
 
-Do not write a batch of test cases and then implement them all at once. Each RED-GREEN cycle is one test. This is the constraint that prevents over-implementation and keeps each step small.
+The default is one test per RED-GREEN cycle: it prevents over-implementation and keeps each step small. Hold this line strictly for **genuinely complex domain logic**, where each case forces a real design decision.
 
-If a plan lists multiple test scenarios (e.g., "1.1a FAILING test: ... scenarios X, Y, Z"), implement them as individual RED-GREEN cycles within that task — not as a batch.
+For **trivial or parallel cases** — the degenerate null/empty/zero cases, or several near-identical variations that exercise the same code path — it is fine to write a small batch in one RED phase and satisfy them together. Forcing a literal single-assertion cycle for logic that a hard-coded return already covers just multiplies test runs and context without improving the design.
+
+Rule of thumb: if the next test would force you to *generalize* the implementation, do it as its own cycle. If it would pass under the code you already have (or a trivial extension), batch it.
+
+If a plan lists multiple test scenarios (e.g., "1.1a FAILING test: ... scenarios X, Y, Z"), use this judgment to decide whether each scenario is its own cycle or part of a batch — don't implement them all blindly at once, but don't mechanically split trivial ones either.
 
 ### What "minimal implementation" really means
 
@@ -96,6 +101,14 @@ This feels silly for trivial examples, but for complex domain logic it prevents 
 ### When tests depend on infrastructure
 
 Sometimes you need infrastructure (database, repository, ORM model) before a test can even run. Set up the minimum infrastructure needed to make the test *runnable* (e.g., require the file, create the class skeleton), then let it fail on the behavioral assertion. The infrastructure setup is not the implementation — the behavior is.
+
+### Keeping the session lean
+
+TDD runs many cycles, and test-runner output accumulates in context — long, high-context sessions are the main cost driver. Keep runs cheap and the context small:
+
+- Prefer scoped, quiet runs in the inner loop (see RED/GREEN above); reserve full-suite runs for boundaries and the task end.
+- Once a unit of behavior is finished and its full suite is green, the test output from those completed cycles is no longer needed. If context is growing large mid-feature, `/compact` at that boundary before starting the next unit.
+- `/clear` when switching to an unrelated task rather than carrying prior cycles forward.
 
 ### Refactoring test code
 
