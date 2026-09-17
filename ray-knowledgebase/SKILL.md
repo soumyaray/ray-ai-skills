@@ -17,13 +17,13 @@ Search the user's Obsidian knowledgebase to find and surface relevant notes with
 
 ## Vault location
 
-Default (customize for your own setup):
-
 ```
-~/Obsidian/Vault/
+~/Sync/Dropbox/KnowledgeBase/
 ```
 
-Replace this path with the actual location of the user's vault. If the vault is itself a git repository, follow the conventions in its own `CLAUDE.md` (structure, frontmatter, tagging, wiki-links, linting) when creating or editing notes.
+If that directory does not exist, this skill is installed on a different setup: locate the vault by globbing for a `.obsidian/` directory under the home folder and use the directory that contains it, rather than guessing a path.
+
+If the vault is itself a git repository, follow the conventions in its own `CLAUDE.md` (structure, frontmatter, tagging, wiki-links, linting) when creating or editing notes.
 
 ## MOCs (Maps of Content)
 
