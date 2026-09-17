@@ -1,5 +1,5 @@
 ---
-name: branch-plan
+name: ray-branch-plan
 description: Create a plan document for the current branch, or for a specified new/existing branch. The complete template and all instructions are provided below — do not search for examples elsewhere.
 disable-model-invocation: true
 ---
@@ -9,22 +9,67 @@ disable-model-invocation: true
 ## Usage
 
 ```
-/branch-plan [<branch-name>]
+/ray-branch-plan [<branch-name>]
 ```
 
-- `/branch-plan` — plan for the current branch
-- `/branch-plan ray/refactor-backend-gateway` — create branch and plan
+- `/ray-branch-plan` — plan for the current branch
+- `/ray-branch-plan ray/refactor-backend-gateway` — create branch and plan
 
 ## Instructions for Claude
 
-When the user invokes `/branch-plan`:
+When the user invokes `/ray-branch-plan`:
 
 1. **Discover branch**: Use current branch, or create the named branch
-2. **Create plan file**: `PLAN.<sanitized-name>.md` (replace `/` with `-`) using the template below
-3. **Update `CLAUDE.local.md`**: Replace existing `@PLAN.*.md` (or legacy `@CLAUDE.*.md`) reference with the new file
-4. **Ask the user** for a one-line goal (optional)
-5. **Report** created branch and file paths
-6. **On "what's next" prompts during the branch's lifecycle**: offer 2–3 short options with tradeoffs, not a sequential rundown. Users steer better from a menu than a march.
+2. **Check the plan directory and its naming convention**: follow "Plan file naming" below — this can prompt the user before anything is written
+3. **Create plan file**: `.claude/plans/NNN-PLAN-<slug>/PLAN.md` using the template below
+4. **Update `CLAUDE.local.md`**: Replace the existing plan reference with an `@` include of the new file
+5. **Ask the user** for a one-line goal (optional)
+6. **Report** created branch and file paths
+7. **On "what's next" prompts during the branch's lifecycle**: offer 2–3 short options with tradeoffs, not a sequential rundown. Users steer better from a menu than a march.
+
+## Plan file naming
+
+This section owns the convention. Other skills only need to know that plans live in `.claude/plans/` and that they must match what is already there. **This skill is also the only writer of the convention into `.claude/CLAUDE.md`.** The first time you create a plan in a project, state the convention in full in that file's **Plans** section. `ray-init` creates that section, but it says only where the docs live, so extend the block it left rather than adding a second one. Every other skill then reads the convention from the project, and none of them has to read this file.
+
+Plans and their working docs live in `.claude/plans/` (gitignored, and symlinked into new worktrees by Sideways when configured). Create the directory if it does not exist.
+
+**One folder per work stream**, named `NNN-PURPOSE-slug`:
+
+- `NNN` — a zero-padded sequence number starting at `001`. It strictly increments and it is **never reused**. Before you create a new plan, list `.claude/plans/` and take the next unused number.
+- `PURPOSE` — an uppercase tag for the kind of document that started the stream: `PLAN`, `BUGFIX`, `REFACTOR`, `HOTFIX`, and so on. It does not change when a second kind of document joins the folder.
+- `slug` — a short kebab-case name, normally derived from the branch name (replace `/` with `-`, drop an owner prefix such as `ray/` when it adds nothing).
+
+**Inside the folder**:
+
+- The main document takes the name of its kind: `PLAN.md`, `BUGFIX.md`.
+- When a folder holds two or more of these, prefix each one with a letter that gives the reading order: `a-PLAN.md`, `b-BUGFIX.md`. A lone document takes no letter, so a folder gains letters at the moment a second document arrives.
+- Supporting files keep a kind tag and take no letter: `SKETCHES.html`, `SKETCHES-hifi.html`, `ASSET-og-card.html`. Add a suffix when a folder holds several files of one kind.
+- A reference inside one folder uses the bare filename. A reference to another folder uses the full path from the repository root.
+
+```
+001-PLAN-design-initial/
+  a-PLAN.md
+  b-BUGFIX.md
+  SKETCHES-shell-options.html
+002-PLAN-projects/
+  PLAN.md
+```
+
+### When the project already uses a different convention
+
+Before writing the first file, look at `.claude/plans/` (and the repo root, where older plans often sit) for existing plan documents. If any of them do **not** match `NNN-PURPOSE-slug/PURPOSE.md` — for example a flat `NNN-PURPOSE-name.ext`, `PLAN.<branch>.md`, `PLAN-001-name.md`, or a root-level `PLAN.md` — stop and ask the developer a single y/n question:
+
+> Existing plan files follow a different naming convention: `<list them>`. Move them into `NNN-PURPOSE-slug/` folders? (y/n)
+
+- **y** — migrate first, then create the new plan:
+  - Move with `git mv` for tracked files, plain `mv` for gitignored ones.
+  - Keep each file's existing number when it already has one. Otherwise number by creation order (oldest first, `git log --diff-filter=A` or mtime) so the sequence reflects history.
+  - Give the folder the purpose of the document that started the stream, and put every auxiliary doc of that stream in the same folder.
+  - Update every reference: `@` includes in `CLAUDE.local.md`, cross-references inside the plan docs, and any path mentioned in committed files (code comments, stylesheets, READMEs). Grep for each old filename and confirm no hits remain.
+  - Update the **Plans** section of `.claude/CLAUDE.md` to state the new convention, so later sessions follow it.
+- **n** — keep the project's existing convention and name the new plan to match it. Do not mix two conventions in one directory. Record the choice in the plan so a later session does not re-open the question.
+
+If the project documents a plan convention in `.claude/CLAUDE.md` that differs from this skill's, that document wins unless the developer chooses to migrate.
 
 ### Planning and execution guidelines
 
@@ -38,7 +83,9 @@ When populating or updating a plan:
 
 **Refactoring slices first**: When a feature will awkwardly extend existing structure (renames, contract widenings, constraint changes), plan a dedicated refactoring slice *before* the feature slice. Behavior-preserving + test-covered. Keeps each PR reviewable and limits blast radius.
 
-**Split plan at slice boundaries once a slice seals**: When a multi-slice plan's shipped-slice detail starts crowding the active slice, split into `PLAN.<branch>-1.md` (shipped, reference) + `PLAN.<branch>-2.md` (active). Update `CLAUDE.local.md` to point at the active file.
+**Split plan at slice boundaries once a slice seals**: When a multi-slice plan's shipped-slice detail starts crowding the active slice, split `PLAN.md` into `a-PLAN.md` (shipped, reference) and `b-PLAN.md` (active) inside the same folder — one work stream keeps one folder. Update `CLAUDE.local.md` to point at the active file.
+
+**Context-clear checkpoints**: Mark the points in the plan where it is safe to clear context before continuing — typically after a phase completes and the plan has been updated to capture its state. Write each checkpoint as a standalone line in the task list (e.g. `> ✅ Safe to clear context here`), never buried inside a longer paragraph, so the user can spot it at a glance.
 
 **Update after each phase**: After each phase completes (tests written, implementation passing, frontend updated, verification), immediately update the plan: mark completed tasks, record findings/decisions, update Current State.
 
@@ -79,7 +126,9 @@ Plan files are working docs, not ADRs. They carry in-progress states, rejected a
 - **Plan lives in main after merge**: noisy but built-in audit trail.
 - **Plan archived out before merge**: clean main; decisions captured in commit messages, PR body, and any project-specific decisions doc (e.g. `doc/future-work.md` for deferrals).
 
-Ask the user which convention applies when creating a new plan. If archived, the archive location is a project-specific choice (common options: a gitignored in-repo directory, an external notes vault, etc.).
+Ask the user which convention applies when creating a new plan. The default is the second: `.claude/plans/` is gitignored, so plans never reach main. If archived elsewhere, the archive location is a project-specific choice (a gitignored in-repo directory, an external notes vault, etc.).
+
+When a branch merges, mark its plan closed rather than deleting it: a short `> **CLOSED** (date): merged to <branch> as <sha>` note under the title, and a final Current State entry. Closed plans keep their number.
 
 ## Plan File Template
 
@@ -141,6 +190,9 @@ Deliver a complete, testable feature end-to-end:
 - [ ] 1a [Failing test for expected behavior]
 - [ ] 1b [Additional test scenarios]
 - [ ] 2 [Implementation to make tests pass]
+
+> ✅ Safe to clear context here (once the plan above is updated)
+
 - [ ] 3 [Frontend update]
 - [ ] 4 Manual verification
 
@@ -161,10 +213,10 @@ Last updated: [date]
 
 ## Example
 
-Input: `/branch-plan ray/add-file-uploads`
+Input: `/ray-branch-plan ray/add-file-uploads`
 
-Creates:
+With `.claude/plans/` holding `001-PLAN-design-initial/` and `002-PLAN-projects/`, this creates:
 
 - Branch: `ray/add-file-uploads`
-- File: `PLAN.ray-add-file-uploads.md`
-- Updates: `CLAUDE.local.md` → `@PLAN.ray-add-file-uploads.md`
+- File: `.claude/plans/003-PLAN-add-file-uploads/PLAN.md`
+- Updates: `CLAUDE.local.md` → `@.claude/plans/003-PLAN-add-file-uploads/PLAN.md`
