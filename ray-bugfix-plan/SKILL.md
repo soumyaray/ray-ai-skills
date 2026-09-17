@@ -1,6 +1,6 @@
 ---
 name: ray-bugfix-plan
-description: Plan and track a bugfix with diagnosis-first discipline — create a BUGFIX.<branch>.md working doc, trace the reported symptom to a proven root cause, and write a failing test that reproduces the bug BEFORE fixing it. Use when the user reports a bug to fix, asks to investigate or diagnose a defect, starts a bugfix branch, or mentions "ray-bugfix-plan". The complete template and all instructions are below — do not search for examples elsewhere.
+description: Plan and track a bugfix with diagnosis-first discipline — create a BUGFIX working doc in the project's plans directory, trace the reported symptom to a proven root cause, and write a failing test that reproduces the bug BEFORE fixing it. Use when the user reports a bug to fix, asks to investigate or diagnose a defect, starts a bugfix branch, or mentions "ray-bugfix-plan". The complete template and all instructions are below — do not search for examples elsewhere.
 ---
 
 # Bugfix Plan Skill
@@ -23,8 +23,13 @@ A bugfix is not a small feature. Features start from a goal; bugfixes start from
    - `.claude/bugfixes/` if it exists
    - `.claude/archive/` if it exists
    - `.claude/plans/` if it exists
-   - otherwise create `.claude/bugfixes/`
-3. **Create doc**: `BUGFIX.<sanitized-branch>.md` (replace `/` with `-`) in that location, from the template below.
+   - otherwise create `.claude/plans/`
+3. **Create doc**, from the template below. Do not invent a naming scheme. Take the first rule that applies:
+   - **The branch already has a plan document.** Put the bugfix doc beside that plan, so one work stream stays in one place, and match the naming of the files already there. When the convention gives reading order by a letter prefix, rename the plan to `a-PLAN.md` and name this doc `b-BUGFIX.md`. Fix every reference to the old plan filename, the `@` include in `CLAUDE.local.md` first.
+   - **The project records a convention** in `.claude/CLAUDE.md`. Follow it, and open a work stream of your own. Under a folder convention that means a new `NNN-BUGFIX-<slug>/` folder holding `BUGFIX.md`, with `NNN` the next unused number.
+   - **Neither.** Name the doc `BUGFIX-<slug>.md`, where `<slug>` is the branch name with `/` replaced by `-`.
+
+   Do not read the `ray-branch-plan` skill for this. It owns the convention, and it writes the convention into `.claude/CLAUDE.md`, which is already in context.
 4. **Update `CLAUDE.local.md`** (if the project uses one): add/replace an `@`-reference to the bugfix doc so context survives clearing.
 5. **Record the symptom verbatim** before touching any code: the user's/reporter's words, plus every observed detail.
 6. **Work the process below**, updating the doc as each phase completes — it is the single source of truth if context is cleared.
@@ -132,5 +137,7 @@ Input: `/ray-bugfix-plan fix-dead-button`
 Creates:
 
 - Branch: `fix-dead-button`
-- File: `.claude/bugfixes/BUGFIX.fix-dead-button.md`
-- Updates: `CLAUDE.local.md` → `@.claude/bugfixes/BUGFIX.fix-dead-button.md`
+- File, under the folder convention: `.claude/plans/004-BUGFIX-fix-dead-button/BUGFIX.md`, taking the next unused number.
+- File, if `fix-dead-button` already has a plan at `.claude/plans/004-PLAN-fix-dead-button/PLAN.md`: the doc lands in that folder as `b-BUGFIX.md`, and the plan becomes `a-PLAN.md`.
+- File, when the project records no convention and the branch has no plan: `.claude/plans/BUGFIX-fix-dead-button.md`.
+- Updates: `CLAUDE.local.md` → an `@` reference to whichever path step 3 chose
